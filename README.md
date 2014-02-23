@@ -36,6 +36,7 @@ Possible inputs include towns, counties, or point data (addresses or coordinates
 
 ##Lead Developers
 [Joe Di Stefano](http://twitter.com/joeydi)
+
 [Matt Parrilla](http://twitter.com/mattparrilla)
 
 ##Want to help?
