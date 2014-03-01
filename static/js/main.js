@@ -1,10 +1,18 @@
 var VTMM = VTMM || {};
 VTMM.vtMap = {};
 
+VTMM.init = function() {
+    queue()
+        .defer(d3.json, "static/data/vt.json")
+        .defer(d3.csv, "static/data/data.csv")
+        .await(VTMM.vtMap.loadData);
+};
+
 VTMM.vtMap.options = {
     'width': $("#map").width(),
     'height': $("#map").height(),
-    'colorRange': colorbrewer.YlGn[9]
+    'colorRange': colorbrewer.YlGn[9],
+    'selectedField': 'population'
 };
 
 VTMM.vtMap.svg = d3.select("#map").append("svg")
@@ -22,7 +30,7 @@ VTMM.vtMap.path = d3.geo.path()
 VTMM.vtMap.getDomain = function(field) {
     var domain = [];
     for (var i = 0; i < VTMM.vtMap.data.objects.vt_towns.geometries.length; i++) {
-        var value = VTH.vtMap.data.objects.vt_towns.geometries[i].properties[field];
+        var value = VTMM.vtMap.data.objects.vt_towns.geometries[i].properties[field];
         domain.push(value);
     }
     return domain;
@@ -49,110 +57,90 @@ VTMM.vtLegend.yAxis = d3.svg.axis()
     .tickValues(color.domain())
     .orient("right");
 
-d3.csv("static/data/data.csv", function(data) {
-    d3.json("static/data/vt.json", function(error, vt) {
-
-        for (var i = 0; i < data.length; i++) {
-            var dataTown = data[i].town;
-            var dataPop = parseFloat(data[i].population);
-
-            for (var j = 0; j < vt.objects.vt_towns.geometries.length; j++) {
-                var jsonTown = vt.objects.vt_towns.geometries[j].properties.town;
-
-                if (dataTown.toUpperCase() == jsonTown) {
-                    vt.objects.vt_towns.geometries[j].properties.population = dataPop;
-                    break;
-                }
+VTMM.vtMap.loadData = function(error, vt, data) {
+    for (var i = 0; i < data.length; i++) {
+        var dataTown = data[i].town.toUpperCase();
+        for (var j = 0; j < vt.objects.vt_towns.geometries.length; j++) {
+            var jsonTown = vt.objects.vt_towns.geometries[j].properties.town;
+            if (dataTown == jsonTown) {
+                var field = VTMM.vtMap.options.selectedField;
+                vt.objects.vt_towns.geometries[j].properties[field] = data[i][field];
             }
         }
+    }
+    VTMM.data = data;
+    VTMM.vtMap.data = vt;
+    VTMM.vtMap.render();
+};
 
-        var vermont = topojson.feature(vt, vt.objects.vt_towns);
+VTMM.vtMap.render = function() {
+    var vt = VTMM.vtMap.data;
+    var field = VTMM.vtMap.options.selectedField;
+    VTMM.vtMap.currentScale = VTMM.vtMap.getScale(field);
 
-        VTMM.vtMap.svg.append("path")
-            .datum(vermont)
-            .attr("d", VTMM.vtMap.path)
-            .style("stroke", "#777")
-            .style("stroke-width", "1");
-
-
-        var g = VTMM.vtMap.svg.append("g")
-            .attr("class", "key")
-            .attr("transform", "translate(" + (VTMM.vtMap.options.width - (VTMM.vtMap.options.width * 0.2)) + ", " + (VTMM.vtMap.options.height - (VTMM.vtMap.options.height * 0.9)) + ")")
-            .call(VTMM.vtLegend.yAxis);
-
-        g.selectAll("rect")
-            .data(color.range().map(function(d, i) {
-                return {
-                    y0: i ? VTMM.vtLegend.y(color.domain()[i - 1]) : VTMM.vtLegend.y.range()[0],
-                    y1: i < color.domain().length ? VTMM.vtLegend.y(color.domain()[i]) : VTMM.vtLegend.y.range()[1],
-                    z: d
-                };
-            }))
-            .enter().append("rect")
-                .attr("width", 8)
-                .attr("y", function(d) { return d.y0; })
-                .attr("height", function(d) { return d.y1 - d.y0; })
-                .style("fill", function(d) { return d.z; });
-
-
-        VTMM.vtMap.svg.selectAll(".subunit")
-            .data(topojson.feature(vt, vt.objects.vt_towns).features)
+    VTMM.vtMap.svg.selectAll(".town")
+        .data(topojson.feature(vt, vt.objects.vt_towns).features)
         .enter().append("path")
             .attr("d", VTMM.vtMap.path)
+            .attr("class", "town")
             .style("fill", function(d) {
-                var population = d.properties.population;
+                var stat = d.properties[field];
 
-                if (population) {
-                    return color(population);
+                if (stat) {
+                    return VTMM.vtMap.currentScale(stat);
                 } else {
                     return "#ddd";
                 }
             })
+        .on("mouseover", function(d) {
+            var xPosition = d3.mouse(this)[0];
+            var yPosition = d3.mouse(this)[1] - 30;
 
-            .on("mouseover", function(d) {
-                var xPosition = d3.mouse(this)[0];
-                var yPosition = d3.mouse(this)[1] - 30;
+            VTMM.vtMap.svg.append("text")
+                .attr("id", "tooltip")
+                .attr("x", xPosition)
+                .attr("y", yPosition)
+                .attr("text-anchor", "middle")
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "11px")
+                .attr("font-weight", "bold")
+                .attr("fill", "black")
+                .text(d.properties.town);
 
-                VTMM.vtMap.svg.append("text")
-                    .attr("id", "tooltip")
-                    .attr("x", xPosition)
-                    .attr("y", yPosition)
-                    .attr("text-anchor", "middle")
-                    .attr("font-family", "sans-serif")
-                    .attr("font-size", "11px")
-                    .attr("font-weight", "bold")
-                    .attr("fill", "black")
-                    .text(d.properties.town);
+            d3.select(this)
+                .style("fill", "#ef6548");
+        })
 
-                d3.select(this)
-                .style("fill", "#509e2f");
-            })
-            .on("mouseout", function(d) {
-                d3.select("#tooltip").remove();
+        .on("mouseout", function(d) {
+            d3.select("#tooltip").remove();
 
-                d3.select(this)
-                .transition()
-                .duration(250)
-                .style("fill", function(d) {
-                var population = d.properties.population;
-
-                if (population) {
-                    return color(population);
+            d3.select(this)
+                .style("fill", function() {
+                var stat = d.properties[VTMM.vtMap.options.selectedField];
+                if (stat) {
+                    return VTMM.vtMap.currentScale(stat);
                 } else {
                     return "#ddd";
                 }
-            });
-
-
-
+                });
+            })
+        .on("click", function(d) {
+            var town = slugify(d.properties.town);
+            VTMM.select_town(town);
         });
 
-        VTMM.vtMap.svg.append("path")
-            .datum(topojson.feature(vt, vt.objects.lake))
-            .attr("d", VTMM.vtMap.path)
-            .style("stroke", "#89b6ef")
-            .style("stroke-width", "1px")
-            .style("fill", "#b6d2f5");
+    VTMM.vtMap.getStat = function(properties) {
+        return properties[VTMM.vtMap.options.selectedField];
+    };
 
-    });
+    VTMM.vtMap.svg.append("path")
+        .datum(topojson.feature(vt, vt.objects.lake))
+        .attr("d", VTMM.vtMap.path)
+        .style("stroke", "#89b6ef")
+        .style("stroke-width", "1px")
+        .style("fill", "#b6d2f5");
+};
+
+$(document).ready(function() {
+    VTMM.init();
 });
