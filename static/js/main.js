@@ -28,12 +28,9 @@ VTMM.vtMap.path = d3.geo.path()
     .projection(VTMM.vtMap.projection);
 
 VTMM.vtMap.getDomain = function(field) {
-    var domain = [];
-    for (var i = 0; i < VTMM.vtMap.data.objects.vt_towns.geometries.length; i++) {
-        var value = VTMM.vtMap.data.objects.vt_towns.geometries[i].properties[field];
-        domain.push(value);
-    }
-    return domain;
+    var objects = VTMM.vtMap.data.objects.vt_towns.geometries;
+
+    return $.map(objects, function( object ) { return object.properties[field] });
 };
 
 VTMM.vtMap.getScale = function(field) {
