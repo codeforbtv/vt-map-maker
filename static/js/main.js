@@ -58,7 +58,7 @@ VTMM.vtLegend.yAxis = function(field) {
 };
 
 VTMM.vtLegend.options = {
-    'width': 6 
+    'width': 6
 };
 
 VTMM.vtLegend.colorScale = function(field) {
@@ -72,12 +72,12 @@ VTMM.vtLegend.colorScale = function(field) {
 
 VTMM.vtMap.loadData = function(error, vt, data) {
     for (var i = 0; i < data.length; i++) {
-        var dataTown = data[i].town.toUpperCase();
+        var field = VTMM.vtMap.options.selectedField,
+            dataTown = data[i].town.toUpperCase();
         VTMM.vtMap.maxValue = parseInt(data[i][field], 10) > parseInt(VTMM.vtMap.maxValue, 10) ? data[i][field] : VTMM.vtMap.maxValue;
         for (var j = 0; j < vt.objects.vt_towns.geometries.length; j++) {
             var jsonTown = vt.objects.vt_towns.geometries[j].properties.town;
             if (dataTown == jsonTown) {
-                var field = VTMM.vtMap.options.selectedField;
                 vt.objects.vt_towns.geometries[j].properties[field] = data[i][field];
             }
         }
@@ -97,15 +97,7 @@ VTMM.vtMap.render = function() {
         .enter().append("path")
             .attr("d", VTMM.vtMap.path)
             .attr("class", "town")
-            .style("fill", function(d) {
-                var stat = d.properties[field];
-
-                if (stat) {
-                    return VTMM.vtMap.currentScale(stat);
-                } else {
-                    return "#ddd";
-                }
-            })
+            .style("fill", VTMM.vtMap.fillFunc)
         .on("mouseover", function(d) {
             var xPosition = d3.mouse(this)[0];
             var yPosition = d3.mouse(this)[1] - 30;
@@ -128,15 +120,7 @@ VTMM.vtMap.render = function() {
         .on("mouseout", function(d) {
             d3.select("#tooltip").remove();
 
-            d3.select(this)
-                .style("fill", function() {
-                var stat = d.properties[field];
-                if (stat) {
-                    return VTMM.vtMap.currentScale(stat);
-                } else {
-                    return "#ddd";
-                }
-            });
+            d3.select(this).style("fill", VTMM.vtMap.fillFunc);
         })
 
         .on("click", function(d) {
@@ -172,6 +156,17 @@ VTMM.vtMap.render = function() {
         .style("stroke-width", "1px")
         .style("fill", "#b6d2f5");
 };
+
+VTMM.vtMap.fillFunc = function(d) {
+    var field = VTMM.vtMap.options.selectedField,
+        value = d.properties[field];
+
+    if (value) {
+        return VTMM.vtMap.currentScale(value);
+    }
+
+    return "#ddd";
+}
 
 $(document).ready(function() {
     VTMM.init();
