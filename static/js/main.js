@@ -4,7 +4,7 @@ VTMM.map = {};
 VTMM.init = function() {
     queue()
         .defer(d3.json, "static/data/vt.json")
-        .defer(d3.csv, "static/data/data.csv")
+        .defer(d3.csv, "https://docs.google.com/spreadsheet/pub?key=0AtWnpcGxoF0xdFhOLUFDRGRURUpOWktwTDd4alJhVGc&output=csv")
         .await(VTMM.map.loadData);
 };
 
@@ -12,7 +12,7 @@ VTMM.map.options = {
     'width': $("#map").width(),
     'height': $("#map").height(),
     'colorRange': colorbrewer.YlGn[7],
-    'selectedField': 'population'
+    'selectedField': 'wage'
 };
 
 VTMM.map.svg = d3.select("#map").append("svg")
@@ -34,7 +34,7 @@ VTMM.map.getDomain = function(field) {
 };
 
 VTMM.map.getScale = function(field) {
-    return d3.scale.quantile()
+    return d3.scale.linear()
         .domain(VTMM.map.getDomain(field))
         .range(VTMM.map.options.colorRange);
 };
@@ -45,9 +45,9 @@ VTMM.map.maxValue = 0;
 VTMM.legend = {};
 
 VTMM.legend.y = function() {
-    return d3.scale.sqrt()
+    return d3.scale.linear()
         .domain([0, VTMM.map.maxValue])
-        .range([0, 325]);
+        .range([0, VTMM.map.options.height - 80]);
 };
 
 VTMM.legend.yAxis = function(field) {
@@ -62,8 +62,8 @@ VTMM.legend.options = {
 };
 
 VTMM.legend.colorScale = function(field) {
-    var quantiles = VTMM.map.getScale(field).quantiles();
-    quantiles.push(VTMM.map.maxValue);
+    var max = VTMM.map.maxValue,
+        quantiles = [0, max/6, max/3, max/2, 2*max/3, 5*max/6, max];
     return {
         'domain': quantiles.sort(function(a,b){ return a-b; }),
         'range': VTMM.map.options.colorRange
