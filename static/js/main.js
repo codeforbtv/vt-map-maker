@@ -111,7 +111,7 @@ VTMM.map.render = function() {
                 .attr("font-size", "11px")
                 .attr("font-weight", "bold")
                 .attr("fill", "black")
-                .text(d.properties.town);
+                .text(d.properties.town + d.properties[field]);
 
             d3.select(this)
                 .style("fill", "#ef6548");
