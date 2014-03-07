@@ -4,15 +4,14 @@ VTMM.map = {};
 VTMM.init = function() {
     queue()
         .defer(d3.json, "static/data/vt.json")
-        .defer(d3.csv, "https://docs.google.com/spreadsheet/pub?key=0AtWnpcGxoF0xdFhOLUFDRGRURUpOWktwTDd4alJhVGc&output=csv")
+        .defer(d3.csv, "https://docs.google.com/spreadsheet/pub?key=0AtWnpcGxoF0xdGtiMWVrM3RUWl9SdkU2d1VyRWJtaGc&output=csv")
         .await(VTMM.map.loadData);
 };
 
 VTMM.map.options = {
     'width': $("#map").width(),
     'height': $("#map").height(),
-    'colorRange': colorbrewer.YlGn[8],
-    'selectedField': 'wage'
+    'colorRange': colorbrewer.YlGn[9]
 };
 
 VTMM.map.svg = d3.select("#map").append("svg")
@@ -70,22 +69,22 @@ VTMM.legend.colorScale = function() {
 };
 
 VTMM.map.loadData = function(error, vt, data) {
-    var field = Object.keys(data[0]).pop();
+    VTMM.map.field = Object.keys(data[0]).pop();
     for (var i = 0; i < data.length; i++) {
             var dataTown = data[i].town.toUpperCase();
         for (var j = 0; j < vt.objects.vt_towns.geometries.length; j++) {
             var jsonTown = vt.objects.vt_towns.geometries[j].properties.town;
             if (dataTown == jsonTown) {
-                vt.objects.vt_towns.geometries[j].properties[field] = data[i][field];
+                vt.objects.vt_towns.geometries[j].properties[VTMM.map.field] = data[i][VTMM.map.field];
             }
         }
     }
     VTMM.data = data;
     VTMM.map.data = vt;
-    VTMM.map.domain = VTMM.map.getDomain(field).filter(Number);
+    VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.maxValue = Math.max.apply(Math, VTMM.map.domain);
     VTMM.map.minValue = Math.min.apply(Math, VTMM.map.domain);
-    VTMM.map.render(field);
+    VTMM.map.render(VTMM.map.field);
 };
 
 VTMM.map.render = function(field) {
@@ -158,8 +157,7 @@ VTMM.map.render = function(field) {
 };
 
 VTMM.map.fillFunc = function(d) {
-    var field = VTMM.map.options.selectedField,
-        value = d.properties[field];
+    value = d.properties[VTMM.map.field];
 
     if (value) {
         return VTMM.map.currentScale(value);
