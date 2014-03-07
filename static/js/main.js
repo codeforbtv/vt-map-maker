@@ -190,18 +190,47 @@ VTMM.map.fillFunc = function(d) {
 };
 
 VTMM.loader.init = function () {
-    var form = $('#loader form');
+    var loader = $('#loader'),
+        form = loader.find('form'),
+        button = form.find('button');
 
     form.submit(function (e) {
         e.preventDefault();
 
         var url = form.find('#url').val();
-        
+
+        button.prop('disabled', true);
+
         d3.csv(url, function (data) {
-            VTMM.map.loadData(data, 'unemp_rate2012');
+            button.prop('disabled', false);
+            VTMM.loader.show_data_sample(data);
+            loader.modal('hide');
         });
     });
 }
+
+VTMM.loader.show_data_sample = function (data) {
+    var keys = Object.keys(data[0]),
+        container = $('#loader form').parent(),
+        list = $('<ul id="field-menu" class="list-group">'),
+        item = $('<li class="list-group-item">');
+
+    for (var i = 1; i < keys.length; i++ ) {
+        item
+            .clone()
+            .text(keys[i])
+            .data('key', keys[i])
+            .click(function() {
+                list.find('.active').removeClass('active');
+                $(this).addClass('active');
+                VTMM.map.loadData(data, $(this).data('key'));
+            })
+            .appendTo(list);
+    }
+
+    list.prepend($('<li class="list-group-item"><strong>Select a Field to Map</strong></li>'));
+    $('body').find('#field-menu').remove().end().append(list);
+};
 
 $(document).ready(function() {
     VTMM.init();
