@@ -11,7 +11,7 @@ VTMM.init = function() {
 VTMM.map.options = {
     'width': $("#map").width(),
     'height': $("#map").height(),
-    'colorRange': colorbrewer.YlGn[7],
+    'colorRange': colorbrewer.YlGn[8],
     'selectedField': 'wage'
 };
 
@@ -30,30 +30,30 @@ VTMM.map.path = d3.geo.path()
 VTMM.map.getDomain = function(field) {
     var objects = VTMM.map.data.objects.vt_towns.geometries;
 
-    return $.map(objects, function( object ) { return object.properties[field] });
+    return $.map(objects, function( object ) { return parseFloat(object.properties[field]) });
 };
 
-VTMM.map.getScale = function(field) {
-    return d3.scale.linear()
-        .domain(VTMM.map.getDomain(field))
+VTMM.map.getScale = function() {
+    return d3.scale.quantile()
+        .domain(VTMM.map.domain.sort())
         .range(VTMM.map.options.colorRange);
 };
-
-
-VTMM.map.maxValue = 0;
 
 VTMM.legend = {};
 
 VTMM.legend.y = function() {
     return d3.scale.linear()
-        .domain([0, VTMM.map.maxValue])
+        .domain([VTMM.map.minValue, VTMM.map.maxValue])
         .range([0, VTMM.map.options.height - 80]);
 };
 
-VTMM.legend.yAxis = function(field) {
+VTMM.legend.yAxis = function() {
+    var ticks = VTMM.legend.colorScale().domain;
+    ticks.push(VTMM.map.maxValue);
+    ticks.unshift(VTMM.map.minValue);
     return d3.svg.axis()
         .scale(VTMM.legend.y())
-        .tickValues(VTMM.legend.colorScale(field).domain)
+        .tickValues(ticks)
         .orient("right");
 };
 
@@ -61,20 +61,18 @@ VTMM.legend.options = {
     'width': 6
 };
 
-VTMM.legend.colorScale = function(field) {
-    var max = VTMM.map.maxValue,
-        quantiles = [0, max/6, max/3, max/2, 2*max/3, 5*max/6, max];
+VTMM.legend.colorScale = function() {
+    var quantiles = VTMM.map.getScale().quantiles();
     return {
-        'domain': quantiles.sort(function(a,b){ return a-b; }),
+        'domain': quantiles,
         'range': VTMM.map.options.colorRange
     };
 };
 
 VTMM.map.loadData = function(error, vt, data) {
+    var field = Object.keys(data[0]).pop();
     for (var i = 0; i < data.length; i++) {
-        var field = VTMM.map.options.selectedField,
-            dataTown = data[i].town.toUpperCase();
-        VTMM.map.maxValue = parseInt(data[i][field], 10) > parseInt(VTMM.map.maxValue, 10) ? data[i][field] : VTMM.map.maxValue;
+            var dataTown = data[i].town.toUpperCase();
         for (var j = 0; j < vt.objects.vt_towns.geometries.length; j++) {
             var jsonTown = vt.objects.vt_towns.geometries[j].properties.town;
             if (dataTown == jsonTown) {
@@ -84,13 +82,15 @@ VTMM.map.loadData = function(error, vt, data) {
     }
     VTMM.data = data;
     VTMM.map.data = vt;
-    VTMM.map.render();
+    VTMM.map.domain = VTMM.map.getDomain(field).filter(Number);
+    VTMM.map.maxValue = Math.max.apply(Math, VTMM.map.domain);
+    VTMM.map.minValue = Math.min.apply(Math, VTMM.map.domain);
+    VTMM.map.render(field);
 };
 
-VTMM.map.render = function() {
+VTMM.map.render = function(field) {
     var vt = VTMM.map.data;
-    var field = VTMM.map.options.selectedField;
-    VTMM.map.currentScale = VTMM.map.getScale(field);
+    VTMM.map.currentScale = VTMM.map.getScale();
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
@@ -111,7 +111,7 @@ VTMM.map.render = function() {
                 .attr("font-size", "11px")
                 .attr("font-weight", "bold")
                 .attr("fill", "black")
-                .text(d.properties.town + d.properties[field]);
+                .text(d.properties.town + " " + field + ":" + d.properties[field]);
 
             d3.select(this)
                 .style("fill", "#ef6548");
@@ -146,7 +146,7 @@ VTMM.map.render = function() {
             .enter().append("rect")
             .attr("width", VTMM.legend.options.width)
             .attr("y", function(d) { return d.y0; })
-            .attr("height", function(d) { console.log(d); return d.y1 - d.y0; })
+            .attr("height", function(d) { return d.y1 - d.y0; })
             .style("fill", function(d) { return d.z; });
 
     VTMM.map.svg.append("path")
@@ -166,7 +166,7 @@ VTMM.map.fillFunc = function(d) {
     }
 
     return "#ddd";
-}
+};
 
 $(document).ready(function() {
     VTMM.init();
