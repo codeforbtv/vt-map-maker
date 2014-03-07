@@ -94,7 +94,7 @@ VTMM.map.loadData = function(data, field) {
             }
         }
     }
-    
+
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.maxValue = Math.max.apply(Math, VTMM.map.domain);
     VTMM.map.minValue = Math.min.apply(Math, VTMM.map.domain);
@@ -108,6 +108,18 @@ VTMM.map.loadMapData = function(vt) {
             .attr("d", VTMM.map.path)
             .attr("class", "town")
             .style("fill", '#ddd');
+
+    // Lake Champlain
+    VTMM.map.svg.append("path")
+        .datum(topojson.feature(vt, vt.objects.lake))
+        .attr("d", VTMM.map.path)
+        .style("stroke", "#89b6ef")
+        .style("stroke-width", "1px")
+        .style("fill", "#b6d2f5");
+
+    VTMM.map.svg.append("g")
+        .attr("class", "key")
+        .attr("transform", "translate(" + (VTMM.map.options.width - 80) + ",35)");
 };
 
 VTMM.map.render = function(field) {
@@ -150,33 +162,25 @@ VTMM.map.render = function(field) {
         });
 
     // Scale
-    VTMM.map.svg.append("g")
-        .attr("class", "key")
-        .attr("transform", "translate(" + (VTMM.map.options.width - 80) + ",35)")
+    var rectangles = VTMM.map.svg.select("g.key")
         .call(VTMM.legend.yAxis(field))
         .selectAll("rect")
-            .data(VTMM.legend.colorScale(field).range.map(function(d, i) {
-                var domain = VTMM.legend.colorScale(field).domain;
-                var y = VTMM.legend.y();
-                return {
-                    y0: i ? y(domain[i - 1]) : y.range()[0],
-                    y1: i < domain.length ? y(domain[i]) : y.range()[1],
-                    z: d
-                };
-            }))
-            .enter().append("rect")
+        .data(VTMM.legend.colorScale(field).range.map(function(d, i) {
+            var domain = VTMM.legend.colorScale(field).domain;
+            var y = VTMM.legend.y();
+            return {
+                y0: i ? y(domain[i - 1]) : y.range()[0],
+                y1: i < domain.length ? y(domain[i]) : y.range()[1],
+                z: d
+            };
+        }));
+
+    rectangles
+        .enter().append("rect")
             .attr("width", VTMM.legend.options.width)
             .attr("y", function(d) { return d.y0; })
             .attr("height", function(d) { return d.y1 - d.y0; })
-            .style("fill", function(d) { return d.z; });
-
-    // Lake Champlain
-    VTMM.map.svg.append("path")
-        .datum(topojson.feature(vt, vt.objects.lake))
-        .attr("d", VTMM.map.path)
-        .style("stroke", "#89b6ef")
-        .style("stroke-width", "1px")
-        .style("fill", "#b6d2f5");
+            .style("fill", function(d) { return d.z; });
 };
 
 VTMM.map.fillFunc = function(d) {
@@ -196,9 +200,8 @@ VTMM.loader.init = function () {
         e.preventDefault();
 
         var url = form.find('#url').val();
-        
         d3.csv(url, function (data) {
-            VTMM.map.loadData(data, 'unemp_rate2012');
+            VTMM.map.loadData(data, 'wage');
         });
     });
 }
