@@ -181,6 +181,9 @@ VTMM.map.render = function(field) {
             .attr("y", function(d) { return d.y0; })
             .attr("height", function(d) { return d.y1 - d.y0; })
             .style("fill", function(d) { return d.z; });
+
+    rectangles
+        .exit().remove();
 };
 
 VTMM.map.fillFunc = function(d) {
