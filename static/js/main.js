@@ -1,11 +1,12 @@
 var VTMM = VTMM || {};
 VTMM.map = {};
+VTMM.loader = {};
 
 VTMM.init = function() {
     queue()
         .defer(d3.json, "static/data/vt.json")
         .defer(d3.csv, "https://docs.google.com/spreadsheet/pub?key=0AtWnpcGxoF0xdGtiMWVrM3RUWl9SdkU2d1VyRWJtaGc&output=csv")
-        .await(VTMM.map.loadData);
+        .await(VTMM.map.loadAllData);
 };
 
 VTMM.map.options = {
@@ -68,23 +69,45 @@ VTMM.legend.colorScale = function() {
     };
 };
 
-VTMM.map.loadData = function(error, vt, data) {
-    VTMM.map.field = Object.keys(data[0]).pop();
+VTMM.map.loadAllData = function(error, vt, data) {
+    VTMM.data = data;
+    VTMM.map.data = vt;
+
+    VTMM.map.loadMapData(vt);
+    VTMM.map.loadData(data);
+};
+
+VTMM.map.loadData = function(data, field) {
+    if (typeof field === 'undefined') {
+        field = Object.keys(data[0]).pop();
+    }
+
+    VTMM.data = data;
+    VTMM.map.field = field;
+
     for (var i = 0; i < data.length; i++) {
             var dataTown = data[i].town.toUpperCase();
-        for (var j = 0; j < vt.objects.vt_towns.geometries.length; j++) {
-            var jsonTown = vt.objects.vt_towns.geometries[j].properties.town;
+        for (var j = 0; j < VTMM.map.data.objects.vt_towns.geometries.length; j++) {
+            var jsonTown = VTMM.map.data.objects.vt_towns.geometries[j].properties.town;
             if (dataTown == jsonTown) {
-                vt.objects.vt_towns.geometries[j].properties[VTMM.map.field] = data[i][VTMM.map.field];
+                VTMM.map.data.objects.vt_towns.geometries[j].properties[VTMM.map.field] = data[i][VTMM.map.field];
             }
         }
     }
-    VTMM.data = data;
-    VTMM.map.data = vt;
+    
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.maxValue = Math.max.apply(Math, VTMM.map.domain);
     VTMM.map.minValue = Math.min.apply(Math, VTMM.map.domain);
     VTMM.map.render(VTMM.map.field);
+};
+
+VTMM.map.loadMapData = function(vt) {
+    VTMM.map.svg.selectAll(".town")
+        .data(topojson.feature(vt, vt.objects.vt_towns).features)
+        .enter().append("path")
+            .attr("d", VTMM.map.path)
+            .attr("class", "town")
+            .style("fill", '#ddd');
 };
 
 VTMM.map.render = function(field) {
@@ -93,10 +116,9 @@ VTMM.map.render = function(field) {
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
-        .enter().append("path")
-            .attr("d", VTMM.map.path)
-            .attr("class", "town")
-            .style("fill", VTMM.map.fillFunc)
+
+        .style("fill", VTMM.map.fillFunc)
+
         .on("mouseover", function(d) {
             var xPosition = d3.mouse(this)[0];
             var yPosition = d3.mouse(this)[1] - 30;
@@ -127,7 +149,7 @@ VTMM.map.render = function(field) {
             VTMM.select_town(town);
         });
 
-
+    // Scale
     VTMM.map.svg.append("g")
         .attr("class", "key")
         .attr("transform", "translate(" + (VTMM.map.options.width - 80) + ",35)")
@@ -148,6 +170,7 @@ VTMM.map.render = function(field) {
             .attr("height", function(d) { return d.y1 - d.y0; })
             .style("fill", function(d) { return d.z; });
 
+    // Lake Champlain
     VTMM.map.svg.append("path")
         .datum(topojson.feature(vt, vt.objects.lake))
         .attr("d", VTMM.map.path)
@@ -166,6 +189,21 @@ VTMM.map.fillFunc = function(d) {
     return "#ddd";
 };
 
+VTMM.loader.init = function () {
+    var form = $('#loader form');
+
+    form.submit(function (e) {
+        e.preventDefault();
+
+        var url = form.find('#url').val();
+        
+        d3.csv(url, function (data) {
+            VTMM.map.loadData(data, 'unemp_rate2012');
+        });
+    });
+}
+
 $(document).ready(function() {
     VTMM.init();
+    VTMM.loader.init();
 });
