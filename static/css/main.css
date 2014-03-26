@@ -1,1 +1,22 @@
-html,body{height:100%;width:100%}.navbar{margin-bottom:0}#map{height:100%;background:#777}.modal-dialog{width:90% !important}#field-menu{position:absolute;left:20px;top:100px;cursor:pointer;max-height:50%;overflow:scroll}
+html,
+body {
+  height: 100%;
+  width: 100%; }
+
+.navbar {
+  margin-bottom: 0; }
+
+#map {
+  height: 100%;
+  background: #777; }
+
+.modal-dialog {
+  width: 90% !important; }
+
+#field-menu {
+  position: absolute;
+  left: 20px;
+  top: 100px;
+  cursor: pointer;
+  max-height: 50%;
+  overflow: scroll; }
