@@ -3,10 +3,11 @@ VTMM.map = {};
 VTMM.legend = {};
 VTMM.loader = {};
 
+VTMM.default_data = "https://docs.google.com/spreadsheets/d/1XRN5vzjpV-l9IVTiyejpvfSWDwae_WcHBH4CuHhPuxo/pubhtml";
+
 VTMM.init = function() {
     queue()
         .defer(d3.json, "static/data/vt.json")
-        .defer(d3.csv, "https://docs.google.com/spreadsheet/pub?key=0AtWnpcGxoF0xdGtiMWVrM3RUWl9SdkU2d1VyRWJtaGc&output=csv")
         .await(VTMM.map.loadAllData);
 };
 
@@ -84,18 +85,23 @@ VTMM.legend.init = function() {
         .text(function(d,i) { return VTMM.legend.domain()[i].toString(); });
 };
 
-VTMM.map.loadAllData = function(error, vt, data) {
-    VTMM.data = data;
+VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.data = vt;
 
+    Tabletop.init({
+        key: VTMM.default_data,
+        callback: function(data) {
+            VTMM.data = data;
+            VTMM.map.loadData(data, 'popn2000');
+        },
+        simpleSheet: true
+    });
+
     VTMM.map.loadMapData(vt);
-    VTMM.map.loadData(data);
 };
 
 VTMM.map.loadData = function(data, field) {
-    if (typeof field === 'undefined') {
-        field = Object.keys(data[0]).pop();
-    }
+    field = typeof field !== 'undefined' ? field : Object.keys(data[0]).pop();
 
     VTMM.data = data;
     VTMM.map.field = field;
@@ -206,10 +212,14 @@ VTMM.loader.init = function () {
 
         button.prop('disabled', true);
 
-        d3.csv(url, function (data) {
-            button.prop('disabled', false);
-            VTMM.loader.create_field_table(data);
-            loader.modal('hide');
+        Tabletop.init({
+            key: url,
+            callback: function(data) {
+                button.prop('disabled', false);
+                VTMM.loader.create_field_menu(data);
+                loader.modal('hide');
+            },
+            simpleSheet: true
         });
     });
 };
@@ -225,6 +235,7 @@ VTMM.loader.create_field_menu = function (data) {
         $(this).addClass('active');
         VTMM.map.loadData(data, $(this).data('key'));
     };
+
     for (var i = 1; i < keys.length; i++ ) {
         item
             .clone()
