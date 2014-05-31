@@ -1,0 +1,26 @@
+{
+  "name": "vt-map-maker",
+  "version": "0.0.1",
+  "dependencies": {
+    "topojson": "~1.6.14",
+    "d3": "~3.4.8",
+    "jquery": "~1.10.2",
+    "queue-async": "~1.0.7",
+    "colorbrewer": "~1.0.0"
+  },
+  "private": true,
+  "homepage": "https://github.com/codeforbtv/vt-map-maker",
+  "authors": [
+    "Joe di Stefano <joeydi@okaypl.us>",
+    "Matt Parrilla <matthew.parrilla@gmail.com>"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "js/libs",
+    "test",
+    "tests"
+  ]
+}

@@ -12,8 +12,10 @@ module.exports = function (grunt) {
         concat: {
             dist: {
                 src: [
-                    // Explicitly list files to determine order
-                    'js/libs/*.js',
+                    'js/libs/d3/d3.js',
+                    'js/libs/topojson/topojson.js',
+                    'js/libs/colorbrewer/colorbrewer.js',
+                    'js/libs/queue-async/queue.js',
                     'js/main.js'
                 ],
                 dest: 'js/build/script.js'
