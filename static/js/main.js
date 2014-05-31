@@ -34,40 +34,11 @@ VTMM.map.getDomain = function(field) {
 };
 
 VTMM.map.getScale = function() {
-    return d3.scale.quantile()
+    return d3.scale.linear()
         .domain(VTMM.map.domain.sort())
         .range(VTMM.map.options.colorRange);
 };
 
-VTMM.legend = {};
-
-VTMM.legend.y = function() {
-    return d3.scale.linear()
-        .domain([VTMM.map.minValue, VTMM.map.maxValue])
-        .range([0, VTMM.map.options.height - 80]);
-};
-
-VTMM.legend.yAxis = function() {
-    var ticks = VTMM.legend.colorScale().domain;
-    ticks.push(VTMM.map.maxValue);
-    ticks.unshift(VTMM.map.minValue);
-    return d3.svg.axis()
-        .scale(VTMM.legend.y())
-        .tickValues(ticks)
-        .orient("right");
-};
-
-VTMM.legend.options = {
-    'width': 6
-};
-
-VTMM.legend.colorScale = function() {
-    var quantiles = VTMM.map.getScale().quantiles();
-    return {
-        'domain': quantiles,
-        'range': VTMM.map.options.colorRange
-    };
-};
 
 VTMM.map.loadAllData = function(error, vt, data) {
     VTMM.data = data;
@@ -96,8 +67,6 @@ VTMM.map.loadData = function(data, field) {
     }
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
-    VTMM.map.maxValue = Math.max.apply(Math, VTMM.map.domain);
-    VTMM.map.minValue = Math.min.apply(Math, VTMM.map.domain);
     VTMM.map.render(VTMM.map.field);
 };
 
@@ -107,6 +76,8 @@ VTMM.map.loadMapData = function(vt) {
         .enter().append("path")
             .attr("d", VTMM.map.path)
             .attr("class", "town")
+            .style("stroke", "#a6a8ab")
+            .style("stroke-width", "1px")
             .style("fill", '#ddd');
 
     // Lake Champlain
@@ -161,13 +132,14 @@ VTMM.map.render = function(field) {
             VTMM.select_town(town);
         });
 
-    VTMM.vtMap.svg.append("path")
+    VTMM.map.svg.append("path")
         .datum(topojson.feature(vt, vt.objects.lake))
-        .attr("d", VTMM.vtMap.path)
+        .attr("d", VTMM.map.path)
         .style("stroke", "#89b6ef")
         .style("stroke-width", "1px")
         .style("fill", "#b6d2f5");
 };
+
 VTMM.map.fillFunc = function(d) {
     value = d.properties[VTMM.map.field];
 
@@ -235,19 +207,19 @@ VTMM.loader.create_field_table = function (data) {
     // Add an empty row
     table.append(row.clone());
 
+    var toggleActive = function() {
+        table.find('.active').removeClass('active');
+        row.addClass('active');
+        VTMM.map.loadData(data, $(this).data('key'));
+    };
     // Loop through field keys
     for (var i = 0; i < 5; i++ ) {
         table.find('tr').last()
-            .append(cell.clone().text(keys[i])
+            .append(
+                cell.clone().text(keys[i])
                 .data('key', keys[i])
-                .click(function() {
-                    table.find('.active').removeClass('active');
-                    row.addClass('active');
-                    VTMM.map.loadData(data, $(this).data('key'));
-                })
+                .click(toggleActive())
             );
-
-        // console.log(clone);
     }
 };
 
