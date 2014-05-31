@@ -4,14 +4,17 @@ module.exports = function (grunt) {
         compass: {
             dist: {
                 options: {
-                    sassDir: 'sass',
-                    cssDir: 'css'
+                    'output-style': 'compressed',
+                    'sass-dir': 'sass',
+                    'css-dir': 'css'
                 }
             }
         },
         concat: {
             dist: {
                 src: [
+                    'js/libs/jquery/jquery.js',
+                    'js/libs/bootstrap/dist/js/bootstrap.js',
                     'js/libs/d3/d3.js',
                     'js/libs/topojson/topojson.js',
                     'js/libs/colorbrewer/colorbrewer.js',
@@ -39,8 +42,8 @@ module.exports = function (grunt) {
         },
         watch: {
             scripts: {
-                files: ['js/libs/*.js', 'js/main.js'],
-                tasks: ['concat'],
+                files: ['js/main.js'],
+                tasks: ['concat', 'uglify'],
                 options: {
                     spawn: false,
                     livereload: true
