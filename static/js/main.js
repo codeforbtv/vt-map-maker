@@ -13,7 +13,8 @@ VTMM.init = function() {
 VTMM.map.options = {
     'width': $("#map").width(),
     'height': $("#map").height(),
-    'colorRange': colorbrewer.YlGn[9]
+    'colorRange': colorbrewer.YlGn[9],
+    'scale': 'quantile'
 };
 
 VTMM.map.svg = d3.select("#map").append("svg")
@@ -46,6 +47,42 @@ VTMM.map.scale = function(domain, scaleType) {
         .range(VTMM.map.options.colorRange);
 };
 
+VTMM.legend.domain = function(scaleType) {
+    if (scaleType === 'quantile' || typeof scaleType === 'undefined') {
+        var quantileDomain = VTMM.map.scale(VTMM.map.domain).quantiles();
+        quantileDomain.unshift(0);
+        return quantileDomain;
+    } else {
+        var mapScale = VTMM.map.scale(VTMM.map.domain, scaleType);
+        return d3.scale.linear().domain(mapScale.domain()).ticks(9);
+    }
+};
+
+VTMM.legend.init = function() {
+    var legend = VTMM.map.svg.selectAll("g.legend")
+        .data(VTMM.legend.domain())
+        .enter().append('g')
+        .attr("class", "legend");
+
+    var ls_w = 20,
+        ls_h = 15;
+
+    legend.append("rect")
+        .attr("x", VTMM.map.options.width * 0.1)
+        .attr("y", function(d,i) { 
+            return VTMM.map.options.height * 0.3 - (i*ls_h) - 2*ls_h;})
+        .attr("width", ls_w)
+        .attr("height", ls_h)
+        .style("fill", function(d,i) {
+            return VTMM.map.scale(VTMM.legend.domain())(d); })
+        .style("opacity", 0,8);
+
+    legend.append("text")
+        .attr("x", VTMM.map.options.width * 0.1 + 30)
+        .attr("y", function(d,i) {
+            return VTMM.map.options.height * 0.3 - (i*ls_h) - ls_h -5;})
+        .text(function(d,i) { return VTMM.legend.domain()[i].toString(); });
+};
 
 VTMM.map.loadAllData = function(error, vt, data) {
     VTMM.data = data;
@@ -75,6 +112,7 @@ VTMM.map.loadData = function(data, field) {
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.render(VTMM.map.field);
+    VTMM.legend.init();
 };
 
 VTMM.map.loadMapData = function(vt) {
@@ -150,7 +188,7 @@ VTMM.map.fillFunc = function(d) {
     value = d.properties[VTMM.map.field];
 
     if (value) {
-        return VTMM.map.scale(VTMM.map.domain)(value);
+        return VTMM.map.scale(VTMM.map.domain, VTMM.map.options.scale)(value);
     }
 
     return "#ddd";
