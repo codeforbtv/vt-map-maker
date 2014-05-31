@@ -34,41 +34,18 @@ VTMM.map.getDomain = function(field) {
     return $.map(objects, function( object ) { return parseFloat(object.properties[field]); });
 };
 
-VTMM.map.getScale = function() {
-    return d3.scale.quantile()
-        .domain(VTMM.map.domain.sort())
+VTMM.map.getScale = function(domain, scale) {
+    scale = typeof scale !== 'undefined' ? scale : 'quantile';
+    var domainForScale = {
+        'quantize': [0, d3.max(domain)],
+        'quantile': domain.sort()
+    };
+
+    return d3.scale[scale]()
+        .domain(domainForScale[scale])
         .range(VTMM.map.options.colorRange);
 };
 
-VTMM.legend = {};
-
-VTMM.legend.y = function() {
-    return d3.scale.linear()
-        .domain([VTMM.map.minValue, VTMM.map.maxValue])
-        .range([0, VTMM.map.options.height - 80]);
-};
-
-VTMM.legend.yAxis = function() {
-    var ticks = VTMM.legend.colorScale().domain;
-    ticks.push(VTMM.map.maxValue);
-    ticks.unshift(VTMM.map.minValue);
-    return d3.svg.axis()
-        .scale(VTMM.legend.y())
-        .tickValues(ticks)
-        .orient("right");
-};
-
-VTMM.legend.options = {
-    'width': 6
-};
-
-VTMM.legend.colorScale = function() {
-    var quantiles = VTMM.map.getScale().quantiles();
-    return {
-        'domain': quantiles,
-        'range': VTMM.map.options.colorRange
-    };
-};
 
 VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.data = vt;
@@ -105,8 +82,6 @@ VTMM.map.loadData = function(data, field) {
     }
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
-    VTMM.map.maxValue = Math.max.apply(Math, VTMM.map.domain);
-    VTMM.map.minValue = Math.min.apply(Math, VTMM.map.domain);
     VTMM.map.render(VTMM.map.field);
 };
 
@@ -116,6 +91,8 @@ VTMM.map.loadMapData = function(vt) {
         .enter().append("path")
             .attr("d", VTMM.map.path)
             .attr("class", "town")
+            .style("stroke", "#a6a8ab")
+            .style("stroke-width", "1px")
             .style("fill", '#ddd');
 
     // Lake Champlain
@@ -133,7 +110,7 @@ VTMM.map.loadMapData = function(vt) {
 
 VTMM.map.render = function(field) {
     var vt = VTMM.map.data;
-    VTMM.map.currentScale = VTMM.map.getScale();
+    VTMM.map.currentScale = VTMM.map.getScale(VTMM.map.domain);
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
@@ -245,16 +222,18 @@ VTMM.loader.create_field_table = function (data) {
     // Add an empty row
     table.append(row.clone());
 
+    var toggleActive = function() {
+        table.find('.active').removeClass('active');
+        row.addClass('active');
+        VTMM.map.loadData(data, $(this).data('key'));
+    };
     // Loop through field keys
     for (var i = 0; i < 5; i++ ) {
         table.find('tr').last()
-            .append(cell.clone().text(keys[i])
+            .append(
+                cell.clone().text(keys[i])
                 .data('key', keys[i])
-                .click(function() {
-                    table.find('.active').removeClass('active');
-                    row.addClass('active');
-                    VTMM.map.loadData(data, $(this).data('key'));
-                })
+                .click(toggleActive())
             );
     }
 };
