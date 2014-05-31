@@ -192,13 +192,13 @@ VTMM.loader.init = function () {
 
         d3.csv(url, function (data) {
             button.prop('disabled', false);
-            VTMM.loader.show_data_sample(data);
+            VTMM.loader.create_field_table(data);
             loader.modal('hide');
         });
     });
 };
 
-VTMM.loader.show_data_sample = function (data) {
+VTMM.loader.create_field_menu = function (data) {
     var keys = Object.keys(data[0]),
         container = $('#loader form').parent(),
         list = $('<ul id="field-menu" class="list-group">'),
@@ -220,6 +220,35 @@ VTMM.loader.show_data_sample = function (data) {
 
     list.prepend($('<li class="list-group-item"><strong>Select a Field to Map</strong></li>'));
     $('body').find('#field-menu').remove().end().append(list);
+};
+
+VTMM.loader.create_field_table = function (data) {
+    var keys = Object.keys(data[0]),
+        container = $('#loader form').parent(),
+        table = $('<table id="field-table" class="table"></table>'),
+        row = $('<tr></tr>'),
+        cell = $('<td></td>');
+
+    $('.modal-body').append(table);
+    table.prepend($('<tr><td><strong>Select a Field to Map</strong></td></tr>'));
+
+    // Add an empty row
+    table.append(row.clone());
+
+    // Loop through field keys
+    for (var i = 0; i < 5; i++ ) {
+        table.find('tr').last()
+            .append(cell.clone().text(keys[i])
+                .data('key', keys[i])
+                .click(function() {
+                    table.find('.active').removeClass('active');
+                    row.addClass('active');
+                    VTMM.map.loadData(data, $(this).data('key'));
+                })
+            );
+
+        // console.log(clone);
+    }
 };
 
 $(document).ready(function() {
