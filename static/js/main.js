@@ -1,5 +1,6 @@
 var VTMM = VTMM || {};
 VTMM.map = {};
+VTMM.legend = {};
 VTMM.loader = {};
 
 VTMM.init = function() {
@@ -33,15 +34,15 @@ VTMM.map.getDomain = function(field) {
     return $.map(objects, function( object ) { return parseFloat(object.properties[field]); });
 };
 
-VTMM.map.getScale = function(domain, scale) {
-    scale = typeof scale !== 'undefined' ? scale : 'quantile';
+VTMM.map.scale = function(domain, scaleType) {
+    scaleType = typeof scaleType !== 'undefined' ? scaleType : 'quantile';
     var domainForScale = {
         'quantize': [0, d3.max(domain)],
         'quantile': domain.sort()
     };
 
-    return d3.scale[scale]()
-        .domain(domainForScale[scale])
+    return d3.scale[scaleType]()
+        .domain(domainForScale[scaleType])
         .range(VTMM.map.options.colorRange);
 };
 
@@ -101,7 +102,6 @@ VTMM.map.loadMapData = function(vt) {
 
 VTMM.map.render = function(field) {
     var vt = VTMM.map.data;
-    VTMM.map.currentScale = VTMM.map.getScale(VTMM.map.domain);
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
@@ -150,7 +150,7 @@ VTMM.map.fillFunc = function(d) {
     value = d.properties[VTMM.map.field];
 
     if (value) {
-        return VTMM.map.currentScale(value);
+        return VTMM.map.scale(VTMM.map.domain)(value);
     }
 
     return "#ddd";
