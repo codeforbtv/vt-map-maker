@@ -69,9 +69,9 @@ VTMM.legend.init = function() {
         ls_h = 15;
 
     legend.append("rect")
-        .attr("x", VTMM.map.options.width * 0.1)
+        .attr("x", VTMM.map.options.width * 0.5)
         .attr("y", function(d,i) { 
-            return VTMM.map.options.height * 0.3 - (i*ls_h) - 2*ls_h;})
+            return VTMM.map.options.height * 0.97 - (i*ls_h) - 2*ls_h;})
         .attr("width", ls_w)
         .attr("height", ls_h)
         .style("fill", function(d,i) {
@@ -79,10 +79,10 @@ VTMM.legend.init = function() {
         .style("opacity", 0,8);
 
     legend.append("text")
-        .attr("x", VTMM.map.options.width * 0.1 + 30)
+        .attr("x", VTMM.map.options.width * 0.5 + 30)
         .attr("y", function(d,i) {
-            return VTMM.map.options.height * 0.3 - (i*ls_h) - ls_h -5;})
-        .text(function(d,i) { return VTMM.legend.domain()[i].toString(); });
+            return VTMM.map.options.height * 0.97 - (i*ls_h) - ls_h -5;})
+        .text(function(d,i) { return Math.round(VTMM.legend.domain()[i]).toString(); });
 };
 
 VTMM.map.loadAllData = function(error, vt) {
