@@ -54,19 +54,16 @@ VTMM.map.loadAllData = function(error, vt) {
         key: VTMM.default_data,
         callback: function(data) {
             VTMM.data = data;
-            VTMM.map.loadData(data);
+            VTMM.map.loadData(data, 'popn2000');
         },
         simpleSheet: true
     });
-
 
     VTMM.map.loadMapData(vt);
 };
 
 VTMM.map.loadData = function(data, field) {
-    if (typeof field === 'undefined') {
-        field = Object.keys(data[0]).pop();
-    }
+    field = typeof field !== 'undefined' ? field : Object.keys(data[0]).pop();
 
     VTMM.data = data;
     VTMM.map.field = field;
@@ -177,10 +174,14 @@ VTMM.loader.init = function () {
 
         button.prop('disabled', true);
 
-        d3.csv(url, function (data) {
-            button.prop('disabled', false);
-            VTMM.loader.create_field_table(data);
-            loader.modal('hide');
+        Tabletop.init({
+            key: url,
+            callback: function(data) {
+                button.prop('disabled', false);
+                VTMM.loader.create_field_menu(data);
+                loader.modal('hide');
+            },
+            simpleSheet: true
         });
     });
 };
@@ -196,6 +197,7 @@ VTMM.loader.create_field_menu = function (data) {
         $(this).addClass('active');
         VTMM.map.loadData(data, $(this).data('key'));
     };
+
     for (var i = 1; i < keys.length; i++ ) {
         item
             .clone()
