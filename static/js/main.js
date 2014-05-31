@@ -33,9 +33,15 @@ VTMM.map.getDomain = function(field) {
     return $.map(objects, function( object ) { return parseFloat(object.properties[field]); });
 };
 
-VTMM.map.getScale = function() {
-    return d3.scale.linear()
-        .domain(VTMM.map.domain.sort())
+VTMM.map.getScale = function(domain, scale) {
+    scale = typeof scale !== 'undefined' ? scale : 'quantile';
+    var domainForScale = {
+        'quantize': [0, d3.max(domain)],
+        'quantile': domain.sort()
+    };
+
+    return d3.scale[scale]()
+        .domain(domainForScale[scale])
         .range(VTMM.map.options.colorRange);
 };
 
@@ -95,7 +101,7 @@ VTMM.map.loadMapData = function(vt) {
 
 VTMM.map.render = function(field) {
     var vt = VTMM.map.data;
-    VTMM.map.currentScale = VTMM.map.getScale();
+    VTMM.map.currentScale = VTMM.map.getScale(VTMM.map.domain);
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
