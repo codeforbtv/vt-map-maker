@@ -2,10 +2,11 @@ var VTMM = VTMM || {};
 VTMM.map = {};
 VTMM.loader = {};
 
+VTMM.default_data = "https://docs.google.com/spreadsheets/d/1XRN5vzjpV-l9IVTiyejpvfSWDwae_WcHBH4CuHhPuxo/pubhtml";
+
 VTMM.init = function() {
     queue()
         .defer(d3.json, "static/data/vt.json")
-        .defer(d3.csv, "https://docs.google.com/spreadsheet/pub?key=0AtWnpcGxoF0xdGtiMWVrM3RUWl9SdkU2d1VyRWJtaGc&output=csv")
         .await(VTMM.map.loadAllData);
 };
 
@@ -69,12 +70,20 @@ VTMM.legend.colorScale = function() {
     };
 };
 
-VTMM.map.loadAllData = function(error, vt, data) {
-    VTMM.data = data;
+VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.data = vt;
 
+    Tabletop.init({
+        key: VTMM.default_data,
+        callback: function(data) {
+            VTMM.data = data;
+            VTMM.map.loadData(data);
+        },
+        simpleSheet: true
+    });
+
+
     VTMM.map.loadMapData(vt);
-    VTMM.map.loadData(data);
 };
 
 VTMM.map.loadData = function(data, field) {
@@ -247,8 +256,6 @@ VTMM.loader.create_field_table = function (data) {
                     VTMM.map.loadData(data, $(this).data('key'));
                 })
             );
-
-        // console.log(clone);
     }
 };
 

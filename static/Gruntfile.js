@@ -19,6 +19,7 @@ module.exports = function (grunt) {
                     'js/libs/topojson/topojson.js',
                     'js/libs/colorbrewer/colorbrewer.js',
                     'js/libs/queue-async/queue.js',
+                    'js/libs/tabletop/src/tabletop.js',
                     'js/main.js'
                 ],
                 dest: 'js/build/script.js'
