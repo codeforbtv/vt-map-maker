@@ -4,7 +4,7 @@ module.exports = function (grunt) {
         compass: {
             dist: {
                 options: {
-                    sassDir: 'dev/sass',
+                    sassDir: 'sass',
                     cssDir: 'css'
                 }
             }
@@ -13,15 +13,16 @@ module.exports = function (grunt) {
             dist: {
                 src: [
                     // Explicitly list files to determine order
-                    'dev/js/*.js'
+                    'js/libs/*.js',
+                    'js/main.js'
                 ],
-                dest: 'js/script.js'
+                dest: 'js/build/script.js'
             }
         },
         uglify: {
             build: {
-                src: 'js/script.js',
-                dest: 'js/script.min.js'
+                src: 'js/build/script.js',
+                dest: 'js/build/script.min.js'
             }
         },
         imagemin: {
@@ -36,19 +37,19 @@ module.exports = function (grunt) {
         },
         watch: {
             scripts: {
-                files: ['dev/js/*.js'],
-                tasks: ['concat', 'uglify'],
+                files: ['js/libs/*.js', 'js/main.js'],
+                tasks: ['concat'],
                 options: {
                     spawn: false,
                     livereload: true
                 }
             },
             css: {
-                files: 'dev/sass/*.scss',
+                files: 'sass/*.scss',
                 tasks: ['compass']
             },
             images: {
-                files: 'dev/img/*',
+                files: 'img/*',
                 tasks: ['imagemin']
             }
         },
