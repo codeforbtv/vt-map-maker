@@ -161,13 +161,14 @@ VTMM.map.render = function(field) {
             VTMM.select_town(town);
         });
 
-    VTMM.vtMap.svg.append("path")
+    VTMM.map.svg.append("path")
         .datum(topojson.feature(vt, vt.objects.lake))
-        .attr("d", VTMM.vtMap.path)
+        .attr("d", VTMM.map.path)
         .style("stroke", "#89b6ef")
         .style("stroke-width", "1px")
         .style("fill", "#b6d2f5");
 };
+
 VTMM.map.fillFunc = function(d) {
     value = d.properties[VTMM.map.field];
 
