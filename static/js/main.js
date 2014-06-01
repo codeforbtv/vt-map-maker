@@ -3,29 +3,32 @@ VTMM.map = {};
 VTMM.legend = {};
 VTMM.loader = {};
 
-VTMM.default_data = "https://docs.google.com/spreadsheets/d/1XRN5vzjpV-l9IVTiyejpvfSWDwae_WcHBH4CuHhPuxo/pubhtml";
-
 VTMM.init = function() {
     queue()
         .defer(d3.json, "static/data/vt.json")
         .await(VTMM.map.loadAllData);
+    VTMM.legend.init();
 };
 
-VTMM.map.options = {
+VTMM.map.dimensions = {
     'width': $("#map").width(),
-    'height': $("#map").height(),
+    'height': $("#map").height()
+};
+
+VTMM.options = {
     'colorRange': colorbrewer.YlGn[9],
-    'scale': 'quantile'
+    'scale': 'quantile',
+    'data': "https://docs.google.com/spreadsheets/d/1XRN5vzjpV-l9IVTiyejpvfSWDwae_WcHBH4CuHhPuxo/pubhtml"
 };
 
 VTMM.map.svg = d3.select("#map").append("svg")
-    .attr("width", VTMM.map.options.width)
-    .attr("height", VTMM.map.options.height);
+    .attr("width", VTMM.map.dimensions.width)
+    .attr("height", VTMM.map.dimensions.height);
 
 VTMM.map.projection = d3.geo.transverseMercator()
     .rotate([72.57, -44.20])
-    .translate([VTMM.map.options.width / 2.5, VTMM.map.options.height / 2.75])
-    .scale([VTMM.map.options.height * 23]);
+    .translate([VTMM.map.dimensions.width / 2.5, VTMM.map.dimensions.height / 2.75])
+    .scale([VTMM.map.dimensions.height * 23]);
 
 VTMM.map.path = d3.geo.path()
     .projection(VTMM.map.projection);
@@ -45,7 +48,7 @@ VTMM.map.scale = function(domain, scaleType) {
 
     return d3.scale[scaleType]()
         .domain(domainForScale[scaleType])
-        .range(VTMM.map.options.colorRange);
+        .range(VTMM.options.colorRange);
 };
 
 VTMM.legend.domain = function(scaleType) {
@@ -61,7 +64,7 @@ VTMM.legend.domain = function(scaleType) {
 
 VTMM.legend.init = function() {
     var legend = VTMM.map.svg.selectAll("g.legend")
-        .data(VTMM.legend.domain())
+        .data(VTMM.options.colorRange)
         .enter().append('g')
         .attr("class", "legend");
 
@@ -69,27 +72,44 @@ VTMM.legend.init = function() {
         ls_h = 15;
 
     legend.append("rect")
-        .attr("x", VTMM.map.options.width * 0.5)
-        .attr("y", function(d,i) { 
-            return VTMM.map.options.height * 0.97 - (i*ls_h) - 2*ls_h;})
+        .attr("x", VTMM.map.dimensions.width * 0.5)
+        .attr("y", function(d,i) {
+            return VTMM.map.dimensions.height * 0.97 - (i*ls_h) - 2*ls_h;})
         .attr("width", ls_w)
         .attr("height", ls_h)
         .style("fill", function(d,i) {
-            return VTMM.map.scale(VTMM.legend.domain())(d); })
+            return d;
+        })
         .style("opacity", 0,8);
 
     legend.append("text")
-        .attr("x", VTMM.map.options.width * 0.5 + 30)
+        .attr("x", VTMM.map.dimensions.width * 0.5 + 30)
         .attr("y", function(d,i) {
-            return VTMM.map.options.height * 0.97 - (i*ls_h) - ls_h -5;})
-        .text(function(d,i) { return Math.round(VTMM.legend.domain()[i]).toString(); });
+            return VTMM.map.dimensions.height * 0.97 - (i*ls_h) - ls_h -5;});
 };
+
+VTMM.legend.update = function() {
+
+    var rects = VTMM.map.svg.selectAll("g.legend rect"),
+        text = VTMM.map.svg.selectAll("g.legend text");
+
+    rects
+        .data(VTMM.options.colorRange)
+        .style("fill", function(d) { return d; });
+
+    text
+        .data(VTMM.legend.domain())
+        .text(function(d) {
+            return d > 10 ? Math.round(d).toString() : (Math.round(d * 10) / 10).toFixed(1);
+        });
+};
+
 
 VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.data = vt;
 
     Tabletop.init({
-        key: VTMM.default_data,
+        key: VTMM.options.data,
         callback: function(data) {
             VTMM.data = data;
             VTMM.map.loadData(data, 'popn2000');
@@ -119,7 +139,7 @@ VTMM.map.loadData = function(data, field) {
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.render(VTMM.map.field);
-    VTMM.legend.init();
+    VTMM.legend.update();
 };
 
 VTMM.map.loadMapData = function(vt) {
@@ -142,7 +162,8 @@ VTMM.map.loadMapData = function(vt) {
 
     VTMM.map.svg.append("g")
         .attr("class", "key")
-        .attr("transform", "translate(" + (VTMM.map.options.width - 80) + ",35)");
+        .attr("transform", "translate(" + (VTMM.map.dimensions.width - 80) + ",35)");
+
 };
 
 VTMM.map.render = function(field) {
@@ -195,7 +216,7 @@ VTMM.map.fillFunc = function(d) {
     value = d.properties[VTMM.map.field];
 
     if (value) {
-        return VTMM.map.scale(VTMM.map.domain, VTMM.map.options.scale)(value);
+        return VTMM.map.scale(VTMM.map.domain, VTMM.options.scale)(value);
     }
 
     return "#ddd";
