@@ -68,7 +68,7 @@ body > header {
 
 .map {
     left: 25%;
-    width: 75%;
+    width: 50%;
     background: #777;
 }
 
@@ -77,6 +77,11 @@ body > header {
     max-width: 500px;
     display: block;
     margin: 0 auto;
+}
+
+.info {
+    left: 75%;
+    width: 25%;
 }
 
 .modal-dialog {

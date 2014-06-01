@@ -14,6 +14,9 @@ VTMM.init = function() {
     // Initialize the legend
     VTMM.legend.init();
 
+    // Save map as image
+    $('#save').click(VTMM.map.save);
+
     // Parse the colorbrewer scales
     $.each(colorbrewer, function (k, v) {
         if ( typeof v['9'] !== 'undefined' ) {
@@ -43,6 +46,8 @@ VTMM.init = function() {
         VTMM.options.scale = type;
         VTMM.map.render();
     });
+
+    VTMM.map.init_save();
 };
 
 VTMM.map.dimensions = {
@@ -311,22 +316,26 @@ VTMM.loader.create_field_table = function (data) {
     }
 };
 
+VTMM.map.init_save = function () {
+    $('.info').append('<canvas />');
+};
+
 VTMM.map.save = function() {
-    var html = d3.select("svg")
+    var canvas = document.querySelector("canvas"),
+        context = canvas.getContext("2d"),
+        image = new Image(),
+        html,
+        svg = $('svg');
+
+    html = d3.select("svg")
         .attr("version", 1.1)
         .attr("xmlns", "http://www.w3.org/2000/svg")
         .node().parentNode.innerHTML;
 
-    var imgsrc = 'data:image/svg+xml;base64,'+ btoa(html),
-        img = '<img src="'+imgsrc+'">';
+    $(image).width(svg.width()).height(svg.height());
+    $(canvas).width(svg.width()).height(svg.height());
 
-    d3.select("#svgdataurl").html(img);
-
-    var canvas = document.querySelector("canvas"),
-        context = canvas.getContext("2d");
-
-    var image = new Image();
-    image.src = imgsrc;
+    image.src = 'data:image/svg+xml;base64,'+ btoa(html);
     image.onload = function() {
         context.drawImage(image, 0, 0);
 
@@ -334,7 +343,6 @@ VTMM.map.save = function() {
             pngimg = '<img src="' + canvasdata + '">',
             a = document.createElement("a");
 
-        d3.select("#pngdataurl").html(pngimg);
         a.download = "sample.png";
         a.href = canvasdata;
         a.click();
