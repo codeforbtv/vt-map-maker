@@ -1,4 +1,6 @@
 # VT Map Maker
+Check out the [Github Page for the project](http://codeforbtv.org/vt-map-maker/).
+
 This tool takes google spreadsheets and returns a statewide map.
 
 Possible inputs include towns, counties, or point data (addresses or coordinates).

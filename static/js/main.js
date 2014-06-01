@@ -14,9 +14,6 @@ VTMM.init = function() {
     // Initialize the legend
     VTMM.legend.init();
 
-    // Save map as image
-    $('#save').click(VTMM.map.save());
-
     // Parse the colorbrewer scales
     $.each(colorbrewer, function (k, v) {
         if ( typeof v['9'] !== 'undefined' ) {
@@ -89,7 +86,9 @@ VTMM.map.scale = function(domain, scaleType) {
         .range(VTMM.options.colorRange);
 };
 
-VTMM.legend.domain = function(scaleType) {
+VTMM.legend.domain = function() {
+    var scaleType = VTMM.options.scale;
+
     if (scaleType === 'quantile' || typeof scaleType === 'undefined') {
         var quantileDomain = VTMM.map.scale(VTMM.map.domain).quantiles();
         quantileDomain.unshift(0);
@@ -133,6 +132,8 @@ VTMM.legend.update = function() {
 
     rects
         .data(VTMM.options.colorRange)
+        .transition()
+        .duration(500)
         .style("fill", function(d) { return d; });
 
     text
@@ -209,23 +210,9 @@ VTMM.map.render = function() {
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
 
-        .style("fill", VTMM.map.fillFunc)
-
-        .on("mouseover", function(d) {
-            d3.select(this)
-                .style("fill", "#ef6548");
-        })
-
-        .on("mouseout", function(d) {
-            d3.select("#tooltip").remove();
-
-            d3.select(this).style("fill", VTMM.map.fillFunc);
-        })
-
-        .on("click", function(d) {
-            var town = slugify(d.properties.town);
-            VTMM.select_town(town);
-        });
+        .transition()
+        .duration(500)
+        .style("fill", VTMM.map.fillFunc);
 
     VTMM.map.svg.append("path")
         .datum(topojson.feature(vt, vt.objects.lake))
@@ -351,7 +338,6 @@ VTMM.map.save = function() {
         a.download = "sample.png";
         a.href = canvasdata;
         a.click();
-
     };
 };
 
