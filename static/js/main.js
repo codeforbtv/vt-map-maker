@@ -8,6 +8,8 @@ VTMM.init = function() {
         .defer(d3.json, "static/data/vt.json")
         .await(VTMM.map.loadAllData);
     VTMM.legend.init();
+
+    $('#save').click(VTMM.map.save());
     $('button.scale_type').click(function() {
         var type = $(this).text().toLowerCase();
         VTMM.options.scale = type;
@@ -144,7 +146,6 @@ VTMM.map.loadData = function(data, field) {
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.render();
-    VTMM.legend.update();
 };
 
 VTMM.map.loadMapData = function(vt) {
@@ -201,6 +202,8 @@ VTMM.map.render = function() {
         .style("stroke", "#89b6ef")
         .style("stroke-width", "1px")
         .style("fill", "#b6d2f5");
+
+    VTMM.legend.update();
 };
 
 VTMM.map.fillFunc = function(d) {
@@ -290,22 +293,7 @@ VTMM.loader.create_field_table = function (data) {
     }
 };
 
-function binaryblob(){
-	var byteString = atob(document.querySelector("canvas").toDataURL().replace(/^data:image\/(png|jpg);base64,/, ""));
-	var ia = new Uint8Array(ab);
-	for (var i = 0; i < byteString.length; i++) {
-        ia[i] = byteString.charCodeAt(i);
-    }
-    var dataView = new DataView(ab);
-	var blob = new Blob([dataView], {type: "image/png"});
-	var DOMURL = self.URL || self.webkitURL || self;
-	var newurl = DOMURL.createObjectURL(blob);
- 
-	var img = '<img src="'+newurl+'">'; 
-  d3.select("#img").html(img);
-}
-
-d3.select("#save").on("click", function() {
+VTMM.map.save = function() {
     var html = d3.select("svg")
         .attr("version", 1.1)
         .attr("xmlns", "http://www.w3.org/2000/svg")
@@ -334,8 +322,7 @@ d3.select("#save").on("click", function() {
         a.click();
 
     };
-    binaryblob();
-});
+};
 
 $(document).ready(function() {
     VTMM.init();
