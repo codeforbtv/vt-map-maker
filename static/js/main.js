@@ -3,11 +3,41 @@ VTMM.map = {};
 VTMM.legend = {};
 VTMM.loader = {};
 
+VTMM.scales = {};
+
 VTMM.init = function() {
+    // Load the JSON data
     queue()
         .defer(d3.json, "static/data/vt.json")
         .await(VTMM.map.loadAllData);
+
+    // Initialize the legend
     VTMM.legend.init();
+
+    // Parse the colorbrewer scales
+    $.each(colorbrewer, function (k, v) {
+        if ( typeof v['9'] !== 'undefined' ) {
+            VTMM.scales[k] = v['9'];
+        }
+    });
+
+    // Add a menu item for each scale
+    $.each(VTMM.scales, function (k, v) {
+        var item = $('<li><a /></li>');
+
+        item
+            .clone()
+            .data('scale', v)
+            .find('a')
+            .text(k)
+            .click(function () {
+                VTMM.options.colorRange = v;
+                VTMM.map.render();
+            })
+            .end()
+            .appendTo('ul#color-menu');
+    })
+
     $('button.scale_type').click(function() {
         var type = $(this).text().toLowerCase();
         VTMM.options.scale = type;
