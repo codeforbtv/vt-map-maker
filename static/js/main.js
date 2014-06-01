@@ -249,26 +249,25 @@ VTMM.loader.init = function () {
 VTMM.loader.create_field_menu = function (data) {
     var keys = Object.keys(data[0]),
         container = $('#loader form').parent(),
-        list = $('<ul id="field-menu" class="list-group">'),
-        item = $('<li class="list-group-item">');
+        list = $('#field-menu'),
+        item = $('<li><a /></li>'),
+        activeToggle = function() {
+            list.find('.active').removeClass('active');
+            $(this).addClass('active');
+            VTMM.map.loadData(data, $(this).data('key'));
+        };
 
-    var activeToggle = function() {
-        list.find('.active').removeClass('active');
-        $(this).addClass('active');
-        VTMM.map.loadData(data, $(this).data('key'));
-    };
+    list.empty();
 
     for (var i = 1; i < keys.length; i++ ) {
         item
             .clone()
-            .text(keys[i])
+            .appendTo(list)
             .data('key', keys[i])
             .click(activeToggle)
-            .appendTo(list);
+            .find('a')
+            .text(keys[i]);
     }
-
-    list.prepend($('<li class="list-group-item"><strong>Select a Field to Map</strong></li>'));
-    $('body').find('#field-menu').remove().end().append(list);
 };
 
 VTMM.loader.create_field_table = function (data) {
