@@ -1,5 +1,6 @@
 var VTMM = VTMM || {};
 VTMM.map = {};
+VTMM.legend = {};
 VTMM.loader = {};
 
 VTMM.default_data = "https://docs.google.com/spreadsheets/d/1XRN5vzjpV-l9IVTiyejpvfSWDwae_WcHBH4CuHhPuxo/pubhtml";
@@ -13,7 +14,8 @@ VTMM.init = function() {
 VTMM.map.options = {
     'width': $("#map").width(),
     'height': $("#map").height(),
-    'colorRange': colorbrewer.YlGn[9]
+    'colorRange': colorbrewer.YlGn[9],
+    'scale': 'quantile'
 };
 
 VTMM.map.svg = d3.select("#map").append("svg")
@@ -34,18 +36,54 @@ VTMM.map.getDomain = function(field) {
     return $.map(objects, function( object ) { return parseFloat(object.properties[field]); });
 };
 
-VTMM.map.getScale = function(domain, scale) {
-    scale = typeof scale !== 'undefined' ? scale : 'quantile';
+VTMM.map.scale = function(domain, scaleType) {
+    scaleType = typeof scaleType !== 'undefined' ? scaleType : 'quantile';
     var domainForScale = {
         'quantize': [0, d3.max(domain)],
         'quantile': domain.sort()
     };
 
-    return d3.scale[scale]()
-        .domain(domainForScale[scale])
+    return d3.scale[scaleType]()
+        .domain(domainForScale[scaleType])
         .range(VTMM.map.options.colorRange);
 };
 
+VTMM.legend.domain = function(scaleType) {
+    if (scaleType === 'quantile' || typeof scaleType === 'undefined') {
+        var quantileDomain = VTMM.map.scale(VTMM.map.domain).quantiles();
+        quantileDomain.unshift(0);
+        return quantileDomain;
+    } else {
+        var mapScale = VTMM.map.scale(VTMM.map.domain, scaleType);
+        return d3.scale.linear().domain(mapScale.domain()).ticks(9);
+    }
+};
+
+VTMM.legend.init = function() {
+    var legend = VTMM.map.svg.selectAll("g.legend")
+        .data(VTMM.legend.domain())
+        .enter().append('g')
+        .attr("class", "legend");
+
+    var ls_w = 20,
+        ls_h = 15;
+
+    legend.append("rect")
+        .attr("x", VTMM.map.options.width * 0.5)
+        .attr("y", function(d,i) { 
+            return VTMM.map.options.height * 0.97 - (i*ls_h) - 2*ls_h;})
+        .attr("width", ls_w)
+        .attr("height", ls_h)
+        .style("fill", function(d,i) {
+            return VTMM.map.scale(VTMM.legend.domain())(d); })
+        .style("opacity", 0,8);
+
+    legend.append("text")
+        .attr("x", VTMM.map.options.width * 0.5 + 30)
+        .attr("y", function(d,i) {
+            return VTMM.map.options.height * 0.97 - (i*ls_h) - ls_h -5;})
+        .text(function(d,i) { return Math.round(VTMM.legend.domain()[i]).toString(); });
+};
 
 VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.data = vt;
@@ -81,6 +119,7 @@ VTMM.map.loadData = function(data, field) {
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
     VTMM.map.render(VTMM.map.field);
+    VTMM.legend.init();
 };
 
 VTMM.map.loadMapData = function(vt) {
@@ -108,7 +147,6 @@ VTMM.map.loadMapData = function(vt) {
 
 VTMM.map.render = function(field) {
     var vt = VTMM.map.data;
-    VTMM.map.currentScale = VTMM.map.getScale(VTMM.map.domain);
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
@@ -157,7 +195,7 @@ VTMM.map.fillFunc = function(d) {
     value = d.properties[VTMM.map.field];
 
     if (value) {
-        return VTMM.map.currentScale(value);
+        return VTMM.map.scale(VTMM.map.domain, VTMM.map.options.scale)(value);
     }
 
     return "#ddd";
