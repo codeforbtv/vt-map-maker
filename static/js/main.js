@@ -55,6 +55,7 @@ VTMM.map.loadAllData = function(error, vt) {
         callback: function(data) {
             VTMM.data = data;
             VTMM.map.loadData(data, 'popn2000');
+            VTMM.loader.create_field_menu(data);
         },
         simpleSheet: true
     });
@@ -203,7 +204,7 @@ VTMM.loader.create_field_menu = function (data) {
             .clone()
             .text(keys[i])
             .data('key', keys[i])
-            .click(activeToggle())
+            .click(activeToggle)
             .appendTo(list);
     }
 
