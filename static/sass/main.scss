@@ -1,16 +1,79 @@
-html,
-body {
-    height: 100%;
-    width: 100%;
+@import 'compass/css3';
+
+* {
+    @include box-sizing(border-box);
 }
 
-.navbar {
-    margin-bottom: 0;
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    background: #fff;
+}
+
+body > header {
+    height: 80px;
+    padding: 20px;
+    position: relative;
+    z-index: 2;
+    background: #fff;
+    border-bottom: 2px solid #ccc;
+
+    h1 {
+        margin: 0;
+    }
+}
+
+.content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.col {
+    position: absolute;
+    top: 80px;
+    bottom: 0;
+    background: #fff;
+    border-right: 2px solid #ccc;
+
+    &:last-child {
+        border: none;
+    }
+}
+
+.configure {
+    left: 0;
+    width: 25%;
+
+    .form-group {
+        padding: 0 10px;
+    }
+
+    label {
+        display: block;
+        margin: 5px 0;
+
+        &:first-child {
+            padding: 3px 10px;
+            margin: 0 -10px 10px;
+            background: #eee;
+        }
+    }
+}
+
+.map {
+    left: 25%;
+    width: 75%;
+    background: #777;
 }
 
 #map {
-    height: 90%;
-    background: #777;
+    height: 100%;
     max-width: 500px;
     display: block;
     margin: 0 auto;
@@ -21,12 +84,8 @@ body {
 }
 
 #field-menu {
-    position: absolute;
-    left: 20px;
-    top: 100px;
-    cursor: pointer;
-    max-height: 50%;
-    max-width: 200px;
+    max-height: 300px;
+    // max-width: 300px;
     overflow-y: scroll;
-    overflow-x: hidden;
+    // overflow-x: hidden;
 }

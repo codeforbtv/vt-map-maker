@@ -8,6 +8,11 @@ VTMM.init = function() {
         .defer(d3.json, "static/data/vt.json")
         .await(VTMM.map.loadAllData);
     VTMM.legend.init();
+    $('button.scale_type').click(function() {
+        var type = $(this).text().toLowerCase();
+        VTMM.options.scale = type;
+        VTMM.map.render();
+    });
 };
 
 VTMM.map.dimensions = {
@@ -121,19 +126,11 @@ VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.loadMapData(vt);
 };
 
-VTMM.map.loadData = function(data, field, colorRange, scaleType) {
+VTMM.map.loadData = function(data, field) {
     field = typeof field !== 'undefined' ? field : Object.keys(data[0]).pop();
 
     VTMM.data = data;
     VTMM.map.field = field;
-
-    if (typeof colorRange !== 'undefined') {
-        VTMM.options.colorRange = colorRange;
-    }
-
-    if (typeof scaleType !== 'undefined') {
-        VTMM.options.scale = scaleType;
-    }
 
     for (var i = 0; i < data.length; i++) {
             var dataTown = data[i].town.toUpperCase();
@@ -146,7 +143,7 @@ VTMM.map.loadData = function(data, field, colorRange, scaleType) {
     }
 
     VTMM.map.domain = VTMM.map.getDomain(VTMM.map.field).filter(Number);
-    VTMM.map.render(VTMM.map.field);
+    VTMM.map.render();
     VTMM.legend.update();
 };
 
@@ -174,7 +171,7 @@ VTMM.map.loadMapData = function(vt) {
 
 };
 
-VTMM.map.render = function(field) {
+VTMM.map.render = function() {
     var vt = VTMM.map.data;
 
     VTMM.map.svg.selectAll(".town")
@@ -183,20 +180,6 @@ VTMM.map.render = function(field) {
         .style("fill", VTMM.map.fillFunc)
 
         .on("mouseover", function(d) {
-            var xPosition = d3.mouse(this)[0];
-            var yPosition = d3.mouse(this)[1] - 30;
-
-            VTMM.map.svg.append("text")
-                .attr("id", "tooltip")
-                .attr("x", xPosition)
-                .attr("y", yPosition)
-                .attr("text-anchor", "middle")
-                .attr("font-family", "sans-serif")
-                .attr("font-size", "11px")
-                .attr("font-weight", "bold")
-                .attr("fill", "black")
-                .text(d.properties.town + " " + field + ":" + d.properties[field]);
-
             d3.select(this)
                 .style("fill", "#ef6548");
         })
@@ -257,26 +240,25 @@ VTMM.loader.init = function () {
 VTMM.loader.create_field_menu = function (data) {
     var keys = Object.keys(data[0]),
         container = $('#loader form').parent(),
-        list = $('<ul id="field-menu" class="list-group">'),
-        item = $('<li class="list-group-item">');
+        list = $('#field-menu'),
+        item = $('<li><a /></li>'),
+        activeToggle = function() {
+            list.find('.active').removeClass('active');
+            $(this).addClass('active');
+            VTMM.map.loadData(data, $(this).data('key'));
+        };
 
-    var activeToggle = function() {
-        list.find('.active').removeClass('active');
-        $(this).addClass('active');
-        VTMM.map.loadData(data, $(this).data('key'));
-    };
+    list.empty();
 
     for (var i = 1; i < keys.length; i++ ) {
         item
             .clone()
-            .text(keys[i])
+            .appendTo(list)
             .data('key', keys[i])
             .click(activeToggle)
-            .appendTo(list);
+            .find('a')
+            .text(keys[i]);
     }
-
-    list.prepend($('<li class="list-group-item"><strong>Select a Field to Map</strong></li>'));
-    $('body').find('#field-menu').remove().end().append(list);
 };
 
 VTMM.loader.create_field_table = function (data) {
