@@ -47,6 +47,15 @@ VTMM.init = function() {
         VTMM.map.render();
     });
 
+    // Update dropdown labels with selected value
+    $('body').on('click', '.dropdown-menu li', function () {
+        $(this)
+            .closest('.btn-group')
+            .find('button')
+            .text($(this).text())
+            .append('&nbsp;<span class="caret"></span>');
+    });
+
     VTMM.map.init_save();
 };
 
