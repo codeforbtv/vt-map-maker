@@ -157,25 +157,37 @@ VTMM.legend.update = function() {
         });
 };
 
+VTMM.map.loadData = function (key) {
+    Tabletop.init({
+        key: key,
+        callback: function(data) {
+            // Create fields lookup object from keys in first row of data
+            var fields = Object.keys(data[0]);
+            VTMM.fields = {};
+            $.each(fields, function(k, v) {
+                VTMM.fields[v] = {};
+            });
+
+            VTMM.data = data;
+            VTMM.map.selectField(data, fields[1]);
+
+            VTMM.loader.create_field_menu(data);
+            VTMM.loader.hide();
+        },
+        simpleSheet: true
+    });
+};
 
 VTMM.map.loadAllData = function(error, vt) {
     VTMM.map.data = vt;
 
-    Tabletop.init({
-        key: VTMM.options.data,
-        callback: function(data) {
-            VTMM.data = data;
-            VTMM.map.loadData(data, 'popn2000');
-            VTMM.loader.create_field_menu(data);
-        },
-        simpleSheet: true
-    });
+    VTMM.map.loadData(VTMM.options.data);
 
     VTMM.map.loadMapData(vt);
 };
 
-VTMM.map.loadData = function(data, field) {
-    field = typeof field !== 'undefined' ? field : Object.keys(data[0]).pop();
+VTMM.map.selectField = function(data, field) {
+    field = typeof field !== 'undefined' ? field : VTMM.fields[0];
 
     VTMM.data = data;
     VTMM.map.field = field;
@@ -260,16 +272,17 @@ VTMM.loader.init = function () {
 
         button.prop('disabled', true);
 
-        Tabletop.init({
-            key: url,
-            callback: function(data) {
-                button.prop('disabled', false);
-                VTMM.loader.create_field_menu(data);
-                loader.modal('hide');
-            },
-            simpleSheet: true
-        });
+        VTMM.map.loadData(url);
     });
+};
+
+VTMM.loader.hide = function () {
+    var loader = $('#loader'),
+        form = loader.find('form'),
+        button = form.find('button');
+
+    button.prop('disabled', false);
+    loader.modal('hide');
 };
 
 VTMM.loader.create_field_menu = function (data) {
@@ -278,9 +291,13 @@ VTMM.loader.create_field_menu = function (data) {
         list = $('#field-menu'),
         item = $('<li><a /></li>'),
         activeToggle = function() {
+            var $this = $(this),
+                field = $(this).data('key');
+
             list.find('.active').removeClass('active');
-            $(this).addClass('active');
-            VTMM.map.loadData(data, $(this).data('key'));
+            $this.addClass('active');
+
+            VTMM.map.selectField(data, field);
         };
 
     list.empty();
@@ -312,7 +329,7 @@ VTMM.loader.create_field_table = function (data) {
     var toggleActive = function() {
         table.find('.active').removeClass('active');
         row.addClass('active');
-        VTMM.map.loadData(data, $(this).data('key'));
+        VTMM.map.selectField(data, $(this).data('key'));
     };
     // Loop through field keys
     for (var i = 0; i < 5; i++ ) {
