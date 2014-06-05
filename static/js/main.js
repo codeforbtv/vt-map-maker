@@ -88,10 +88,25 @@ VTMM.map.getDomain = function(field) {
     return $.map(objects, function( object ) { return parseFloat(object.properties[field]); });
 };
 
+VTMM.createLinearDomain = function(domain) {
+
+    var max = d3.max(domain),
+        step = Math.round(max / 9),
+        tick = 0,
+        thresholdArray = [0];
+
+        for (var i=1; i < 9; i++) {
+            tick += step;
+            thresholdArray.push(tick);
+        }
+    return thresholdArray;
+};
+
 VTMM.map.scale = function(domain, scaleType) {
     scaleType = typeof scaleType !== 'undefined' ? scaleType : 'quantile';
+
     var domainForScale = {
-        'quantize': [0, d3.max(domain)],
+        'threshold': VTMM.createLinearDomain(domain),
         'quantile': domain.sort()
     };
 
@@ -108,8 +123,7 @@ VTMM.legend.domain = function() {
         quantileDomain.unshift(0);
         return quantileDomain;
     } else {
-        var mapScale = VTMM.map.scale(VTMM.map.domain, scaleType);
-        return d3.scale.linear().domain(mapScale.domain()).ticks(9);
+        return VTMM.createLinearDomain(VTMM.map.domain);
     }
 };
 
@@ -136,7 +150,7 @@ VTMM.legend.init = function() {
     legend.append("text")
         .attr("x", VTMM.map.dimensions.width * 0.5 + 30)
         .attr("y", function(d,i) {
-            return VTMM.map.dimensions.height * 0.97 - (i*ls_h) - ls_h -5;});
+            return VTMM.map.dimensions.height * 0.985 - (i*ls_h) - ls_h -5;});
 };
 
 VTMM.legend.update = function() {
@@ -224,10 +238,6 @@ VTMM.map.loadMapData = function(vt) {
         .style("stroke-width", "1px")
         .style("fill", "#b6d2f5");
 
-    VTMM.map.svg.append("g")
-        .attr("class", "key")
-        .attr("transform", "translate(" + (VTMM.map.dimensions.width - 80) + ",35)");
-
 };
 
 VTMM.map.render = function() {
@@ -235,7 +245,8 @@ VTMM.map.render = function() {
 
     VTMM.map.svg.selectAll(".town")
         .data(topojson.feature(vt, vt.objects.vt_towns).features)
-
+        .on("click", function(d) { 
+            console.log(d.properties.town, d.properties[VTMM.map.field]); })
         .transition()
         .duration(500)
         .style("fill", VTMM.map.fillFunc);
